@@ -1,0 +1,5 @@
+{
+    "chain": "onomy-testnet-1",
+    "rest_endpoint": "http://localhost:1317/",
+    "poll_interval": 180
+}
