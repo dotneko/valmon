@@ -1,11 +1,12 @@
 {
     "chain": "onomy-testnet-1",
-    "rest_endpoint": "http://localhost:1317/",
+    "rest_endpoint": "http://localhost:1307/",
     "poll_interval": 180,
     "pg_settings": {
 	"host": "localhost",
+	"port": "15432",
 	"username": "postgres",
-	"password_file": "../.pgsecret",
-	"database": "db_dev"
+	"password": "some_password",
+	"dbname": "db_dev"
     }
 }

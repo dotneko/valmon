@@ -2,6 +2,7 @@
 .pgpass
 .pgsecret
 pg_settings.env
+pg_settings_dev.env
 monitor/config.json
 
 # Byte-compiled / optimized / DLL files

@@ -1,3 +1,6 @@
+import logging
+import sys
+
 from datetime import datetime, timezone
 from time import sleep
 
@@ -8,24 +11,32 @@ from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from utils import get_config
 
+# Setup logging
+logging.basicConfig(
+    format = "%(levelname)s | %(asctime)s | %(message)s",
+    stream = sys.stdout,
+    level = logging.INFO,
+)
+logger = logging.getLogger(__name__)
+
 
 def update_valset() -> (int, dict):
-    validators = get_latest_validator_set_sorted(ONOMY_REST)
-    valset_blocknumber = get_latest_block_height(ONOMY_REST)
+    validators: dict = get_latest_validator_set_sorted(ONOMY_REST)
+    valset_blocknumber: int = get_latest_block_height(ONOMY_REST)
     return (valset_blocknumber, validators)
 
 
 def update_statistics(engine, validators: dict) -> dict:
     """Get latest validator set"""
     stats = {}
-    run_time = datetime.now(timezone.utc)
+    run_time: datetime = datetime.now(timezone.utc)
     block_number: int = get_latest_block_height(ONOMY_REST)
     total_token_share: int = 0
     for idx, op_addr in enumerate(validators):
         stats[op_addr] = {}
         stats[op_addr]["moniker"]: str = validators[op_addr]["moniker"]
         # Get validator unique delegators
-        print(f"Retrieving delegator stats for {stats[op_addr]['moniker']}")
+        logger.info(f"Retrieving delegator stats for {stats[op_addr]['moniker']}")
         detailed: dict = get_validator_stats(CHAIN, ONOMY_REST, op_addr, True)
         stats[op_addr]["num_delegators"]: int = detailed["unique_delegators"]
         stats[op_addr]["bonded_utokens"]: int = detailed["bonded_utokens"]
@@ -45,15 +56,14 @@ def update_statistics(engine, validators: dict) -> dict:
             "pc": stats[op_addr]["pc"],
             "total": stats[op_addr]["bonded_utokens"],
         }
-        print(
-            "{} {} {} {:15} {:>6} {}% {}".format(
+        logger.info(
+            "{} {} {:15} {:>6} {}% {}".format(
                 run_time,
                 block_number,
-                op_addr,
                 stats[op_addr]["moniker"],
                 stats[op_addr]["num_delegators"],
                 stats[op_addr]["pc"],
-                #                stats[op_addr]["bonded_utokens"],
+                # stats[op_addr]["bonded_utokens"],
                 stats[op_addr]["bonded_tokens"],
             )
         )
@@ -77,25 +87,19 @@ if __name__ == "__main__":
     ONOMY_REST: str = get_config("rest_endpoint")
     WAIT: int = get_config("poll_interval")
     PG: dict = get_config("pg_settings")
-    with open(PG["pwd_file"]) as f:
-        PG_PASSWORD = f.read().strip()
-    PG_DBPATH: str = f"{PG['username']}:{PG_PASSWORD}@{PG['host']}/{PG['dbname']}"
+    PG_DBPATH: str = f"{PG['username']}:{PG['password']}@{PG['host']}:{PG['port']}/{PG['dbname']}"
+
     validators = {}
     valset_blocknumber: int = None
 
-    print("Get validator set")
     (valset_blocknumber, validators) = update_valset()
-
+    logger.info(f"Got {len(validators)} active validators at block height {valset_blocknumber}")
     engine = create_engine(
         "postgresql+psycopg2://" + PG_DBPATH,
         # execution_options={"isolation_level": "AUTOCOMMIT"},
         future=True,
     )
-    count: int = 0
     while True:
-        # for count in range(5):
-        count += 1
-        print(f"Get statistics [{count}]")
         stats = update_statistics(engine, validators)
-        print(f"Waiting for {WAIT}s")
+        logger.info(f"Waiting for {WAIT}s")
         sleep(WAIT)

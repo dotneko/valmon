@@ -6,11 +6,10 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data/
       - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
-      - ./.pgsecret:/run/secrets/pgsecret
     env_file:
       - ./pg_settings_dev.env
     ports:
-      - 5432:5432
+      - 15432:5432
     restart: unless-stopped
 
 volumes:
