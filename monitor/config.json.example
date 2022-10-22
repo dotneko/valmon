@@ -4,8 +4,8 @@
     "poll_interval": 180,
     "pg_settings": {
 	"host": "localhost",
-	"username": "pgadmin",
-	"password": "pgadmin",
+	"username": "postgres",
+	"password_file": "../.pgsecret",
 	"database": "db_dev"
     }
 }

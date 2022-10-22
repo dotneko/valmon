@@ -4,7 +4,7 @@
 
 ## Requirements
 
-- Running onomy node with REST api enabled
+- Running onomy node with REST API enabled
 - Docker and docker-compose installed
 - Python 3.8+
 
@@ -17,9 +17,16 @@ git clone https://github.com/dotneko/valmon.git
 
 ### Setup PostgreSQL
 
+Create postgres password file and set permissions
+
+```
+echo some_password > .pgsecret
+chmod 0600 .pgsecret
+```
+
 Configure PostgreSQL settings: `pg_settings_dev.env`
 
-Build and run PostgreSQL db with docker compose
+Build and run PostgreSQL db with docker compose:
 
 N.B. Following commands/scripts may require `sudo`
 
@@ -27,9 +34,7 @@ N.B. Following commands/scripts may require `sudo`
 docker compose up --build
 ```
 
-Initialize database table with the script `db_init_stats_table.sh`
-
-Confirm database table createdd with script `db_select_all.sh`
+Confirm database table created with script `db_select_all.sh`
 
 ### Setup monitoring daemon
 
@@ -37,9 +42,9 @@ Python monitoring daemon located in `./monitor` directory
 
 Ensure REST API enabled for **onomyd** and check endpoint in `./onomy/config/app.toml`
 
-Configure chain and REST API endpoint in `./monitor/config.json`
+Configure settings in `./monitor/config.json`
 
-Install dependencies (optionally create virtual environment for installation)
+Install dependencies (optionally create virtual environment for installation):
 
 ```
 pip install -r requirements.txt
@@ -50,12 +55,5 @@ python -m pip install -r requirements.txt
 ## Launch
 
 Launch dockerized PostgreSQL if not already running
-
-```
-docker compose up
-
-# or to run detached in the background
-docker compose up -d
-```
 
 Launch daemon with script `launch_daemon.sh`

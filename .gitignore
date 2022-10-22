@@ -1,5 +1,6 @@
 # Local config
 .pgpass
+.pgsecret
 pg_settings.env
 monitor/config.json
 

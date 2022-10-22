@@ -6,7 +6,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data/
       - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
-      - ./.pgpass:/run/secrets/pgpass
+      - ./.pgsecret:/run/secrets/pgsecret
     env_file:
       - ./pg_settings_dev.env
     ports:

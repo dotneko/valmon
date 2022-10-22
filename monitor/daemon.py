@@ -72,21 +72,26 @@ def update_statistics(engine, validators: dict) -> dict:
 
 if __name__ == "__main__":
 
+    # Load configuration
     CHAIN: str = get_config("chain")
     ONOMY_REST: str = get_config("rest_endpoint")
     WAIT: int = get_config("poll_interval")
-
+    PG: dict = get_config("pg_settings")
+    with open(PG["pwd_file"]) as f:
+        PG_PASSWORD = f.read().strip()
+    PG_DBPATH: str = f"{PG['username']}:{PG_PASSWORD}@{PG['host']}/{PG['dbname']}"
     validators = {}
     valset_blocknumber: int = None
+
     print("Get validator set")
     (valset_blocknumber, validators) = update_valset()
 
     engine = create_engine(
-        "postgresql+psycopg2://pgadmin:pgadmin@localhost/db_dev",
+        "postgresql+psycopg2://" + PG_DBPATH,
         # execution_options={"isolation_level": "AUTOCOMMIT"},
         future=True,
     )
-    count = 0
+    count: int = 0
     while True:
         # for count in range(5):
         count += 1
