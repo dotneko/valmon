@@ -64,7 +64,9 @@ def update_statistics(engine, validators: dict) -> dict:
         """
         )
         with engine.connect() as con:
-            con.execute(insert, data)
+            with con.begin():
+                con.execute(insert, data)
+                con.commit()
     return stats
 
 
@@ -81,7 +83,8 @@ if __name__ == "__main__":
 
     engine = create_engine(
         "postgresql+psycopg2://pgadmin:pgadmin@localhost/db_dev",
-        execution_options={"isolation_level": "AUTOCOMMIT"},
+        # execution_options={"isolation_level": "AUTOCOMMIT"},
+        future=True,
     )
     count = 0
     while True:
