@@ -1,0 +1,11 @@
+{
+    "chain": "onomy-testnet-1",
+    "rest_endpoint": "http://localhost:1317/",
+    "poll_interval": 180,
+    "pg_settings": {
+	"host": "localhost",
+	"username": "pgadmin",
+	"password": "pgadmin",
+	"database": "db_dev"
+    }
+}
