@@ -17,14 +17,7 @@ git clone https://github.com/dotneko/valmon.git
 
 ### Setup PostgreSQL
 
-Create postgres password file and set permissions
-
-```
-echo some_password > .pgsecret
-chmod 0600 .pgsecret
-```
-
-Configure PostgreSQL settings: `pg_settings_dev.env`
+Configure PostgreSQL settings `pg_settings_dev.env` (from `pg_settings_example.env`)
 
 Build and run PostgreSQL db with docker compose:
 
@@ -42,7 +35,7 @@ Python monitoring daemon located in `./monitor` directory
 
 Ensure REST API enabled for **onomyd** and check endpoint in `./onomy/config/app.toml`
 
-Configure settings in `./monitor/config.json`
+Configure settings in `./monitor/config.json` (from `./monitor/config.json.example`)
 
 Install dependencies (optionally create virtual environment for installation):
 
