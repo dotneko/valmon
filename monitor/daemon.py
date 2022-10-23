@@ -36,7 +36,7 @@ async def update_statistics(engine, validators: dict) -> dict:
     val_addrs = [validator for validator in validators.keys()]
     start_time: time = time.time()
     logging.info(f"Requesting data at block {block_number}")
-    resps = await asyncio.gather(
+    val_stats = await asyncio.gather(
         *map(
             get_validator_stats_async,
             repeat(CHAIN),
@@ -46,51 +46,33 @@ async def update_statistics(engine, validators: dict) -> dict:
         )
     )
     logging.info(f"Elapsed time: {time.time() - start_time}s")
-    for resp in resps:
-        op_addr = resp["operator_address"]
-        stats[op_addr] = {}
-        stats[op_addr]["moniker"]: str = resp["moniker"]
-        # Get validator unique delegators
-        stats[op_addr]["num_delegators"]: int = resp["unique_delegators"]
-        stats[op_addr]["bonded_utokens"]: int = resp["bonded_utokens"]
-        stats[op_addr]["bonded_tokens"]: str = resp["bonded_tokens"]
-        total_token_share += int(resp["bonded_utokens"])
-
-    for op_addr in validators:
-        stats[op_addr]["pc"]: float = (
-            stats[op_addr]["bonded_utokens"] / total_token_share * 100
-        )
-        data = {
-            "run_time": run_time,
-            "block_number": block_number,
-            "moniker": stats[op_addr]["moniker"],
-            "address": op_addr,
-            "num_delegators": stats[op_addr]["num_delegators"],
-            "pc": stats[op_addr]["pc"],
-            "total": stats[op_addr]["bonded_utokens"],
-        }
-        #        logger.info(
-        #            "{} {} {:15} {:>6} {}% {}".format(
-        #                run_time,
-        #                block_number,
-        #                stats[op_addr]["moniker"],
-        #                stats[op_addr]["num_delegators"],
-        #                stats[op_addr]["pc"],
-        #                # stats[op_addr]["bonded_utokens"],
-        #                stats[op_addr]["bonded_tokens"],
-        #            )
-        #        )
-        insert = text(
-            """INSERT INTO validator_stats (run_time, block_number, moniker, address, num_delegators, pc, total)
-                     VALUES
-                     (:run_time, :block_number, :moniker, :address, :num_delegators, :pc, :total);
-        """
-        )
-        with engine.connect() as con:
-            with con.begin():
-                con.execute(insert, data)
-                con.commit()
-    logger.info("Wrote to database")
+    inserted_rowcount = 0
+    total_token_share = sum(v["bonded_utokens"] for v in val_stats)
+    with engine.connect() as con:
+        with con.begin():
+            for valdata in val_stats:
+                data = {
+                    "run_time": run_time,
+                    "block_number": block_number,
+                    "moniker": valdata["moniker"],
+                    "address": valdata["operator_address"],
+                    "num_delegators": valdata["unique_delegators"],
+                    "pc": valdata["bonded_utokens"] / total_token_share * 100,
+                    "total": valdata["bonded_utokens"],
+                }
+                insert_stmt = text(
+                    """INSERT INTO validator_stats (run_time, block_number, moniker, address, num_delegators, pc, total)
+                             VALUES
+                             (:run_time, :block_number, :moniker, :address, :num_delegators, :pc, :total);
+                """
+                )
+                result = con.execute(insert_stmt, data)
+                if result.rowcount == 0:
+                    logging.warning(f"Error writing database: {data}")
+                else:
+                    inserted_rowcount += result.rowcount
+            con.commit()
+    logger.info(f"Inserted {inserted_rowcount} records to database")
     return stats
 
 
