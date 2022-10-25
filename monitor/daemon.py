@@ -57,14 +57,17 @@ async def update_statistics(engine, validators: dict) -> dict:
                     "moniker": valdata["moniker"],
                     "address": valdata["operator_address"],
                     "num_delegators": valdata["unique_delegators"],
-                    "pc": valdata["bonded_utokens"] / total_token_share * 100,
+                    "pc": valdata["bonded_utokens"] / total_token_share,
                     "total": valdata["bonded_utokens"],
+                    "top10pc": valdata["top10pc"],
                 }
                 insert_stmt = text(
-                    """INSERT INTO validator_stats (run_time, block_number, moniker, address, num_delegators, pc, total)
-                             VALUES
-                             (:run_time, :block_number, :moniker, :address, :num_delegators, :pc, :total);
-                """
+                    """
+                    INSERT INTO validator_stats (run_time, block_number, moniker, address,
+                        num_delegators, pc, total, top10pc)
+                    VALUES
+                    (:run_time, :block_number, :moniker, :address, :num_delegators, :pc, :total, :top10pc);
+                    """
                 )
                 result = con.execute(insert_stmt, data)
                 if result.rowcount == 0:

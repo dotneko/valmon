@@ -5,5 +5,6 @@ CREATE TABLE public.validator_stats (
     address text NOT NULL,
     num_delegators int NULL,
     pc numeric NULL,
-    total numeric NULL
+    total numeric NULL,
+    top10pc numeric NULL
 );
