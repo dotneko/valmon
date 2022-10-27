@@ -35,7 +35,7 @@ async def update_valset() -> (int, dict):
     return (block_number, validators)
 
 
-async def update_statistics(engine, validators: dict) -> dict:
+async def update_statistics(engine, validators: dict, timeout: int) -> dict:
     """Get latest validator set"""
     run_time: datetime = datetime.now(timezone.utc)
     block_number: int = await get_latest_block_height(REST_ROOT)
@@ -51,6 +51,7 @@ async def update_statistics(engine, validators: dict) -> dict:
             repeat(CHAIN),
             repeat(REST_ROOT),
             val_addrs,
+            repeat(timeout),
             repeat(True),  # include_delegations=True
         )
     )
@@ -119,7 +120,7 @@ async def update_statistics(engine, validators: dict) -> dict:
     logger.info(f"Inserted {inserted_rowcount} validator records to {VAL_TB}")
 
 
-async def interval_statistics(engine, interval):
+async def interval_statistics(engine, interval, timeout):
     while True:
         validators = {}
         (valset_blocknumber, validators) = await update_valset()
@@ -127,11 +128,12 @@ async def interval_statistics(engine, interval):
             f"{len(validators)} active validators at block height {valset_blocknumber}"
         )
         logger.info(
-            f"Poll interval: {interval} [{datetime.now(timezone.utc) + timedelta(seconds=interval)}]"
+            f"Poll interval: {interval}s [{datetime.now(timezone.utc) + timedelta(seconds=interval)}]"
+            + f" | Timeout: {timeout}s"
         )
         if len(validators) > 0:
             await asyncio.gather(
-                update_statistics(engine, validators),
+                update_statistics(engine, validators, timeout),
                 asyncio.sleep(interval),
             )
 
@@ -142,6 +144,7 @@ if __name__ == "__main__":
     CHAIN: str = get_config("chain")
     REST_ROOT: str = get_config("rest_endpoint")
     WAIT: int = get_config("poll_interval")
+    TIMEOUT: int = get_config("max_timeout")
     PG: dict = get_config("pg_settings")
     PG_DBPATH: str = (
         f"{PG['username']}:{PG['password']}@{PG['host']}:{PG['port']}/{PG['dbname']}"
@@ -154,4 +157,4 @@ if __name__ == "__main__":
         # execution_options={"isolation_level": "AUTOCOMMIT"},
         future=True,
     )
-    asyncio.run(interval_statistics(engine, WAIT))
+    asyncio.run(interval_statistics(engine, WAIT, TIMEOUT))

@@ -122,7 +122,11 @@ async def get_number_accounts(chain: str, rest_root: str) -> int:
 
 
 async def get_stats_for_validator(
-    chain: str, rest_root: str, operator_address: str, include_delegations: bool = False
+    chain: str,
+    rest_root: str,
+    operator_address: str,
+    timeout: int = 30,
+    include_delegations: bool = False,
 ) -> dict:
     """
     Returns a dict of information about a given validator
@@ -156,7 +160,7 @@ async def get_stats_for_validator(
                     "delegations?pagination.limit=10000",
                 ]
             )
-            r = await get_async(query_endpoint, headers=HEADERS, timeout=30.0)
+            r = await get_async(query_endpoint, headers=HEADERS, timeout=timeout)
             uniqueDelegators: int = len(r.json()["delegation_responses"])
             sorted_delegations: List = sorted(
                 r.json()["delegation_responses"],
@@ -168,7 +172,7 @@ async def get_stats_for_validator(
             # Calculate % held by top 10 delegators
             top10pc = top10shares / float(validatorData["tokens"])
         except Exception as e:
-            logging.warning(e)
+            logging.warning(f"Error getting delegation data.{e}")
 
     logging.info(
         f"- {validatorData['description']['moniker']:15} "
