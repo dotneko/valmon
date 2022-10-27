@@ -2,6 +2,7 @@
     "chain": "onomy-testnet-1",
     "rest_endpoint": "http://localhost:1307/",
     "poll_interval": 180,
+    "max_timeout": 60,
     "pg_settings": {
 	"host": "localhost",
 	"port": "15432",
