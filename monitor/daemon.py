@@ -3,7 +3,6 @@ import logging
 import sys
 import time
 from datetime import datetime, timedelta, timezone
-from itertools import repeat
 
 from pyibc_async import (
     get_latest_block_height,
@@ -15,6 +14,9 @@ from pyibc_async import (
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 from utils import get_config
+
+# from itertools import repeat
+
 
 # Setup logging
 logging.basicConfig(
@@ -40,21 +42,26 @@ async def update_statistics(engine, validators: dict, timeout: int) -> dict:
     run_time: datetime = datetime.now(timezone.utc)
     block_number: int = await get_latest_block_height(REST_ROOT)
     total_token_share: int = 0
-    val_addrs = [validator for validator in validators.keys()]
     start_time: time = time.time()
     logging.info(f"Requesting data at block {block_number}")
     num_accounts: int = await get_number_accounts(CHAIN, REST_ROOT)
     token_stats: dict = await get_token_data(CHAIN, REST_ROOT)
-    val_stats = await asyncio.gather(
-        *map(
-            get_stats_for_validator,
-            repeat(CHAIN),
-            repeat(REST_ROOT),
-            val_addrs,
-            repeat(timeout),
-            repeat(True),  # include_delegations=True
+    #    val_stats = await asyncio.gather(
+    #        *map(
+    #            get_stats_for_validator,
+    #            repeat(CHAIN),
+    #            repeat(REST_ROOT),
+    #            val_addrs,
+    #            repeat(timeout),
+    #            repeat(True),  # include_delegations=True
+    #        )
+    #    )
+    val_stats = []
+    for val_addr in validators.keys():
+        val_data = await get_stats_for_validator(
+            CHAIN, REST_ROOT, val_addr, timeout, include_delegations=True
         )
-    )
+        val_stats.append(val_data)
     logging.info(f"Elapsed time: {time.time() - start_time}s")
 
     with engine.connect() as con:
