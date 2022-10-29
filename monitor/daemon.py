@@ -93,7 +93,7 @@ async def update_statistics(engine, validators: dict, timeout: int) -> dict:
             else:
                 inserted_rowcount += result.rowcount
             con.commit()
-            logger.info(f"Inserted {inserted_rowcount} validator records to {CHAIN_TB}")
+            logger.info(f"Inserted {inserted_rowcount} record(s) to {CHAIN_TB}")
 
         # Write validator stats
         inserted_rowcount = 0
@@ -124,7 +124,7 @@ async def update_statistics(engine, validators: dict, timeout: int) -> dict:
                 else:
                     inserted_rowcount += result.rowcount
             con.commit()
-    logger.info(f"Inserted {inserted_rowcount} validator records to {VAL_TB}")
+    logger.info(f"Inserted {inserted_rowcount} validator record(s) to {VAL_TB}")
 
 
 async def interval_statistics(engine, interval, timeout):

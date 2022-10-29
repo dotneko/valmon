@@ -1,3 +1,7 @@
+# pyibc_async.py
+# Credits to Reecebcups for his excellent https://github.com/Reecepbcups/python-ibc
+# Extracted code modified and adapted to use async methods
+
 import logging
 import time
 from typing import List
