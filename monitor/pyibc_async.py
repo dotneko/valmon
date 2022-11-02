@@ -10,6 +10,7 @@ import httpx
 
 DENOM: str = "anom"
 HEADERS: dict = {"accept": "application/json"}
+DELEGATORS_LIMIT: int = 20000
 REST_ENDPOINTS = {
     # DO NOT START WITH A /, this way we have to do in our f string
     "accounts": "/cosmos/auth/v1beta1/accounts",
@@ -161,7 +162,7 @@ async def get_stats_for_validator(
                 [
                     rest_root.rstrip("/"),
                     f"{REST_ENDPOINTS['validator_info']}/{operator_address}/",
-                    "delegations?pagination.limit=10000",
+                    f"delegations?pagination.limit={DELEGATORS_LIMIT}",
                 ]
             )
             r = await get_async(query_endpoint, headers=HEADERS, timeout=timeout)
