@@ -28,12 +28,12 @@ logger = logging.getLogger(__name__)
 
 
 async def update_valset() -> (int, dict):
-    validators: dict = await get_latest_validator_set_sorted(REST_ROOT)
-    if validators is None:
-        logging.warning("Error getting validators")
     block_number: int = await get_latest_block_height(REST_ROOT)
     if block_number == -1:
         logging.warning("Error getting latest block height")
+    validators: dict = await get_latest_validator_set_sorted(REST_ROOT, block_number)
+    if validators is None:
+        logging.warning("Error getting validators")
     return (block_number, validators)
 
 
@@ -44,8 +44,8 @@ async def update_statistics(engine, validators: dict, timeout: int) -> dict:
     total_token_share: int = 0
     start_time: time = time.time()
     logging.info(f"Requesting data at block {block_number}")
-    num_accounts: int = await get_number_accounts(CHAIN, REST_ROOT)
-    token_stats: dict = await get_token_data(CHAIN, REST_ROOT)
+    num_accounts: int = await get_number_accounts(REST_ROOT, blockheight=block_number)
+    token_stats: dict = await get_token_data(REST_ROOT, blockheight=block_number)
     #    val_stats = await asyncio.gather(
     #        *map(
     #            get_stats_for_validator,
@@ -59,7 +59,11 @@ async def update_statistics(engine, validators: dict, timeout: int) -> dict:
     val_stats = []
     for val_addr in validators.keys():
         val_data = await get_stats_for_validator(
-            CHAIN, REST_ROOT, val_addr, timeout, include_delegations=True
+            REST_ROOT,
+            val_addr,
+            timeout,
+            include_delegations=True,
+            blockheight=block_number,
         )
         val_stats.append(val_data)
     logging.info(f"Elapsed time: {time.time() - start_time}s")

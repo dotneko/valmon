@@ -10,7 +10,7 @@ import httpx
 
 DENOM: str = "anom"
 HEADERS: dict = {"accept": "application/json"}
-DELEGATORS_LIMIT: int = 20000
+DELEGATORS_LIMIT: int = 50000
 REST_ENDPOINTS = {
     # DO NOT START WITH A /, this way we have to do in our f string
     "accounts": "/cosmos/auth/v1beta1/accounts",
@@ -45,7 +45,9 @@ async def get_latest_block_height(rest_root: str) -> int:
     return block_number
 
 
-async def get_latest_validator_set_sorted(rest_root, bondedOnly: bool = True) -> dict:
+async def get_latest_validator_set_sorted(
+    rest_root, bondedOnly: bool = True, blockheight: int = -1
+) -> dict:
     """
     Returns a sorted validator_set
     """
@@ -57,8 +59,14 @@ async def get_latest_validator_set_sorted(rest_root, bondedOnly: bool = True) ->
             "&status=BOND_STATUS_BONDED" if bondedOnly else "",
         ]
     )
-
-    r = await get_async(query_endpoint)
+    if blockheight > 0:
+        HEADER: dict = {
+            "content-type": "application/json",
+            "x-cosmos-block-height": str(blockheight),
+        }
+        r = await get_async(query_endpoint, headers=HEADER)
+    else:
+        r = await get_async(query_endpoint)
     if r is None:
         return {}
 
@@ -84,12 +92,21 @@ async def get_latest_validator_set_sorted(rest_root, bondedOnly: bool = True) ->
     }
 
 
-async def get_token_data(chain: str, rest_root: str, denom=DENOM) -> dict:
+async def get_token_data(rest_root: str, denom=DENOM, blockheight: int = -1) -> dict:
     """
     Returns a dict of token data
     """
     # Get pool tokens
-    r = await get_async(rest_root.rstrip("/") + f"{REST_ENDPOINTS['pool_tokens']}")
+    if blockheight > 0:
+        HEADER: dict = {
+            "content-type": "application/json",
+            "x-cosmos-block-height": str(blockheight),
+        }
+        r = await get_async(
+            rest_root.rstrip("/") + f"{REST_ENDPOINTS['pool_tokens']}", headers=HEADER
+        )
+    else:
+        r = await get_async(rest_root.rstrip("/") + f"{REST_ENDPOINTS['pool_tokens']}")
     if r is None:
         return {}
     tokenData = {
@@ -114,11 +131,20 @@ async def get_token_data(chain: str, rest_root: str, denom=DENOM) -> dict:
     return tokenData
 
 
-async def get_number_accounts(chain: str, rest_root: str) -> int:
+async def get_number_accounts(rest_root: str, blockheight=-1) -> int:
     """
     Returns number of accounts (wallets)
     """
-    r = await get_async(rest_root.rstrip("/") + f"{REST_ENDPOINTS['accounts']}")
+    if blockheight > 0:
+        HEADER: dict = {
+            "content-type": "application/json",
+            "x-cosmos-block-height": str(blockheight),
+        }
+        r = await get_async(
+            rest_root.rstrip("/") + f"{REST_ENDPOINTS['accounts']}", headers=HEADER
+        )
+    else:
+        r = await get_async(rest_root.rstrip("/") + f"{REST_ENDPOINTS['accounts']}")
     if r is None:
         return {}
     num_accounts = int(r.json()["pagination"]["total"])
@@ -127,20 +153,32 @@ async def get_number_accounts(chain: str, rest_root: str) -> int:
 
 
 async def get_stats_for_validator(
-    chain: str,
     rest_root: str,
     operator_address: str,
     timeout: int = 30,
     include_delegations: bool = False,
+    blockheight: int = -1,
 ) -> dict:
     """
     Returns a dict of information about a given validator
     """
     start_time = time.time()
     # Get validator data
-    r = await get_async(
-        rest_root.rstrip("/") + f"{REST_ENDPOINTS['validator_info']}/{operator_address}"
-    )
+    if blockheight > 0:
+        HEADER: dict = {
+            "content-type": "application/json",
+            "x-cosmos-block-height": str(blockheight),
+        }
+        r = await get_async(
+            rest_root.rstrip("/")
+            + f"{REST_ENDPOINTS['validator_info']}/{operator_address}",
+            headers=HEADER,
+        )
+    else:
+        r = await get_async(
+            rest_root.rstrip("/")
+            + f"{REST_ENDPOINTS['validator_info']}/{operator_address}"
+        )
     if r is None:
         return {}
     validatorData: dict = r.json()["validator"]
@@ -187,7 +225,6 @@ async def get_stats_for_validator(
     )
 
     return {
-        "chain": chain,
         "operator_address": validatorData["operator_address"],
         "jailed": validatorData["jailed"],
         "status": validatorData["status"],  # BOND_STATUS_BONDED
