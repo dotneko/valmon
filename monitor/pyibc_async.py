@@ -210,10 +210,13 @@ async def get_stats_for_validator(
                 key=lambda k: int(k["balance"].get("amount")),
                 reverse=True,
             )
-            for idx in range(0, 10):
-                top10shares += float(sorted_delegations[idx]["balance"]["amount"])
-            # Calculate % held by top 10 delegators
-            top10pc = top10shares / float(validatorData["tokens"])
+            if uniqueDelegators <= 10:
+                top10pc = 1.0
+            else:
+                for idx in range(0, 10):
+                    top10shares += float(sorted_delegations[idx]["balance"]["amount"])
+                # Calculate % held by top 10 delegators
+                top10pc = top10shares / float(validatorData["tokens"])
         except Exception as e:
             logging.warning(f"Error getting delegation data.{e}")
 
