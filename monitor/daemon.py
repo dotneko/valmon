@@ -81,14 +81,15 @@ async def update_statistics(engine, validators: dict, timeout: int) -> dict:
                 "unbonded_tokens": token_stats["unbonded_tokens"],
                 "pool_total": token_stats["pool_total"],
                 "total_supply": token_stats["total_supply"],
+                "chain": CHAIN,
             }
             insert_chain_stmt = text(
                 """
                     INSERT INTO chain_stats (run_time, block_number, num_accounts,
-                        bonded_tokens, unbonded_tokens, pool_total, total_supply)
+                        bonded_tokens, unbonded_tokens, pool_total, total_supply, chain)
                     VALUES
                     (:run_time, :block_number, :num_accounts,
-                     :bonded_tokens, :unbonded_tokens, :pool_total, :total_supply);
+                     :bonded_tokens, :unbonded_tokens, :pool_total, :total_supply, :chain);
                     """
             )
             result = con.execute(insert_chain_stmt, chain_data)
@@ -113,13 +114,14 @@ async def update_statistics(engine, validators: dict, timeout: int) -> dict:
                     "pc": valdata["bonded_utokens"] / total_token_share,
                     "total": valdata["bonded_utokens"],
                     "top10pc": valdata["top10pc"],
+                    "chain": CHAIN,
                 }
                 insert_stmt = text(
                     """
                     INSERT INTO validator_stats (run_time, block_number, moniker, address,
-                        num_delegators, pc, total, top10pc)
+                        num_delegators, pc, total, top10pc, chain)
                     VALUES
-                    (:run_time, :block_number, :moniker, :address, :num_delegators, :pc, :total, :top10pc);
+                    (:run_time, :block_number, :moniker, :address, :num_delegators, :pc, :total, :top10pc, :chain);
                     """
                 )
                 result = con.execute(insert_stmt, data)
